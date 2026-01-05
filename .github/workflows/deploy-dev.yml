@@ -1,0 +1,95 @@
+name: Deploy to Dev
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  id-token: write   # Required for Requesting OIDC Token
+  contents: read    # Required for checking out code
+
+env:
+  AWS_REGION: us-east-1
+  TOOLING_ACCOUNT_ID: "257016720202" # ⚠️ TEMPORARY
+  DEV_ACCOUNT_ID: "067847734974"
+  PROJECT_NAME: "enterprise-cicd"
+  ARTIFACT_BUCKET: "enterprise-cicd-artifacts-257016720202"
+  
+  # Role mapping
+  TOOLING_ROLE_ARN: "arn:aws:iam::257016720202:role/enterprise-cicd-github-actions-role"
+  DEV_ROLE_ARN: "arn:aws:iam::067847734974:role/enterprise-cicd-deploy-role"
+
+jobs:
+  build:
+    name: Build & Upload Artifact
+    runs-on: ubuntu-latest
+    outputs:
+      artifact_key: ${{ steps.upload.outputs.artifact_key }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (Tooling)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.TOOLING_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActions-Build
+
+      - name: Create Lambda Artifact
+        run: |
+          cd app/lambda
+          zip -r ../../release-metadata-api.zip .
+          cd ../..
+          echo "Artifact created: release-metadata-api.zip"
+
+      - name: Upload Artifact to S3
+        id: upload
+        run: |
+          # Immutable artifact key based on Commit SHA
+          ARTIFACT_KEY="lambda/release-metadata-api-${{ github.sha }}.zip"
+          
+          # Upload to S3 (Tooling Account)
+          aws s3 cp release-metadata-api.zip s3://${{ env.ARTIFACT_BUCKET }}/$ARTIFACT_KEY
+          
+          echo "Uploaded to s3://${{ env.ARTIFACT_BUCKET }}/$ARTIFACT_KEY"
+          echo "artifact_key=$ARTIFACT_KEY" >> $GITHUB_OUTPUT
+
+  deploy-dev:
+    name: Deploy to Dev
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (Tooling)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.TOOLING_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActions-DevDeploy
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: infrastructure/dev
+        run: terraform init
+        env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+
+      - name: Terraform Plan
+        working-directory: infrastructure/dev
+        run: |
+          terraform plan -out=dev.tfplan \
+            -var="deploy_role_arn=${{ env.DEV_ROLE_ARN }}" \
+            -var="lambda_artifact_key=${{ needs.build.outputs.artifact_key }}" \
+            -var="release_version=1.0.${{ github.run_number }}" \
+            -var="git_commit=${{ github.sha }}" \
+            -var="build_id=${{ github.run_id }}"
+
+      - name: Terraform Apply
+        working-directory: infrastructure/dev
+        run: terraform apply -auto-approve dev.tfplan

@@ -1,0 +1,27 @@
+# Terraform (Recursive)
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+
+# Sensitive Vars
+*.tfvars
+*.tfvars.json
+
+# CLI Config
+.terraform.lock.hcl
+.terraformrc
+terraform.rc
+
+# AWS Config
+.aws/
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.env
+
+# IDE
+.vscode/
+.idea/

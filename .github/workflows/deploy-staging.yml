@@ -1,0 +1,76 @@
+name: Deploy to Staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: 'Commit SHA to deploy (must allow artifact retrieval)'
+        required: true
+        default: 'latest'
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  TOOLING_ACCOUNT_ID: "257016720202" # ⚠️ TEMPORARY
+  STAGING_ACCOUNT_ID: "956574163435"
+  PROJECT_NAME: "enterprise-cicd"
+  ARTIFACT_BUCKET: "enterprise-cicd-artifacts-257016720202"
+  
+  TOOLING_ROLE_ARN: "arn:aws:iam::257016720202:role/enterprise-cicd-github-actions-role"
+  STAGING_ROLE_ARN: "arn:aws:iam::956574163435:role/enterprise-cicd-deploy-role"
+
+jobs:
+  deploy:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    environment: staging
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit_sha }}
+
+      - name: Set Artifact Key
+        run: |
+          SHA=${{ inputs.commit_sha }}
+          if [ "$SHA" == "latest" ]; then
+            SHA=${{ github.sha }}
+          fi
+          echo "TARGET_SHA=$SHA" >> $GITHUB_ENV
+          echo "ARTIFACT_KEY=lambda/release-metadata-api-$SHA.zip" >> $GITHUB_ENV
+
+      - name: Configure AWS Credentials (Tooling)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.TOOLING_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActions-StagingDeploy
+
+      - name: Verify Artifact Exists in S3
+        run: |
+          aws s3 ls s3://${{ env.ARTIFACT_BUCKET }}/${{ env.ARTIFACT_KEY }} || (echo "Artifact not found! deploy-dev must run first." && exit 1)
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: infrastructure/staging
+        run: terraform init
+
+      - name: Terraform Plan
+        working-directory: infrastructure/staging
+        run: |
+          terraform plan -out=staging.tfplan \
+            -var="deploy_role_arn=${{ env.STAGING_ROLE_ARN }}" \
+            -var="lambda_artifact_key=${{ env.ARTIFACT_KEY }}" \
+            -var="release_version=1.1.${{ github.run_number }}-rc" \
+            -var="git_commit=${{ env.TARGET_SHA }}" \
+            -var="build_id=${{ github.run_id }}"
+
+      - name: Terraform Apply
+        working-directory: infrastructure/staging
+        run: terraform apply -auto-approve staging.tfplan

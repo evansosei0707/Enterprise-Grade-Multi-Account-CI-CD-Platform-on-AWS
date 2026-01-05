@@ -1,0 +1,23 @@
+#------------------------------------------------------------------------------
+# Dev Environment IAM Module Variables
+#------------------------------------------------------------------------------
+
+variable "project_name" {
+  description = "Project name for resource naming"
+  type        = string
+}
+
+variable "environment" {
+  description = "Environment name"
+  type        = string
+}
+
+variable "tooling_account_id" {
+  description = "Tooling account ID (for trust relationship)"
+  type        = string
+}
+
+variable "aws_region" {
+  description = "AWS region"
+  type        = string
+}

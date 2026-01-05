@@ -1,0 +1,3 @@
+
+# Minimal requirements - keeping it standard library only if possible
+# for faster cold starts and simpler packaging
