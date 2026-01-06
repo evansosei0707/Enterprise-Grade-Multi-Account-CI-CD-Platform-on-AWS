@@ -61,7 +61,10 @@ resource "aws_iam_role_policy" "deploy_policy" {
           "lambda:UpdateFunctionConfiguration",
           "lambda:GetFunction",
           "lambda:GetFunctionConfiguration",
+          "lambda:GetFunctionCodeSigningConfig",
           "lambda:ListFunctions",
+          "lambda:ListVersionsByFunction",
+          "lambda:PublishVersion",
           "lambda:InvokeFunction",
           "lambda:AddPermission",
           "lambda:RemovePermission",
@@ -150,7 +153,7 @@ resource "aws_iam_role_policy" "deploy_policy" {
           "s3:GetObjectVersion"
         ]
         Resource = [
-          "arn:aws:s3:::enterprise-cicd-artifacts/*"
+          "arn:aws:s3:::enterprise-cicd-artifacts-${var.tooling_account_id}/*"
         ]
       },
       # KMS for decryption

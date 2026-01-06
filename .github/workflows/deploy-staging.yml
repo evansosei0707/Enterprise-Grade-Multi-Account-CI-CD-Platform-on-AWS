@@ -61,6 +61,24 @@ jobs:
         working-directory: infrastructure/staging
         run: terraform init
 
+      # Apply IAM changes first to ensure deploy role has necessary permissions
+      - name: Apply IAM Changes First
+        working-directory: infrastructure/staging
+        run: |
+          terraform apply -auto-approve \
+            -target=module.iam.aws_iam_role_policy.deploy_policy \
+            -var="deploy_role_arn=${{ env.STAGING_ROLE_ARN }}" \
+            -var="lambda_artifact_key=${{ env.ARTIFACT_KEY }}" \
+            -var="release_version=1.1.${{ github.run_number }}-rc" \
+            -var="git_commit=${{ env.TARGET_SHA }}" \
+            -var="build_id=${{ github.run_id }}"
+
+      # Wait for IAM policy changes to propagate across AWS
+      - name: Wait for IAM Policy Propagation
+        run: |
+          echo "Waiting 15 seconds for IAM policy changes to propagate..."
+          sleep 15
+
       - name: Terraform Plan
         working-directory: infrastructure/staging
         run: |

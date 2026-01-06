@@ -10,6 +10,10 @@ resource "aws_cloudwatch_log_group" "lambda" {
     Name        = "${var.project_name}-${var.environment}-lambda-logs"
     Environment = var.environment
   }
+
+  lifecycle {
+    ignore_changes = [name]
+  }
 }
 
 resource "aws_lambda_function" "release_metadata" {
