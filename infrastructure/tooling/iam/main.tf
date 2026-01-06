@@ -30,7 +30,7 @@ resource "aws_iam_openid_connect_provider" "github" {
 resource "aws_iam_role" "github_actions" {
   name = "${var.project_name}-github-actions-role"
 
-  # Trust policy - only allows GitHub Actions from specific repo/branch
+  # Trust policy - allows GitHub Actions from specific repo (branch or environment)
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -45,8 +45,8 @@ resource "aws_iam_role" "github_actions" {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
           }
           StringLike = {
-            # Only allow main branch
-            "token.actions.githubusercontent.com:sub" = "repo:${var.github_org}/${var.github_repo}:ref:refs/heads/${var.github_branch}"
+            # Allow both branch-based (Dev) and environment-based (Staging/Prod) workflows
+            "token.actions.githubusercontent.com:sub" = "repo:${var.github_org}/${var.github_repo}:*"
           }
         }
       }

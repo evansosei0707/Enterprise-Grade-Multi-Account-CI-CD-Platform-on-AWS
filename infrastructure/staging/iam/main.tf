@@ -144,6 +144,20 @@ resource "aws_iam_role_policy" "deploy_policy" {
           "arn:aws:iam::*:role/${var.project_name}-${var.environment}-*"
         ]
       },
+      # IAM for Deploy Role - Read self (required for Terraform state refresh)
+      {
+        Sid    = "IAMReadSelf"
+        Effect = "Allow"
+        Action = [
+          "iam:GetRole",
+          "iam:GetRolePolicy",
+          "iam:ListRolePolicies",
+          "iam:ListAttachedRolePolicies"
+        ]
+        Resource = [
+          "arn:aws:iam::*:role/${var.project_name}-deploy-role"
+        ]
+      },
       # S3 for artifacts - Read only
       {
         Sid    = "S3ArtifactsRead"
