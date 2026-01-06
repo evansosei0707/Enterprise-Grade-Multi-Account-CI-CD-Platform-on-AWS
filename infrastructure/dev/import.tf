@@ -5,10 +5,12 @@
 # Terraform state on the next terraform plan/apply, preventing the
 # "ResourceAlreadyExistsException" error.
 #
+# Import blocks must be in the root module, not in child modules.
+#
 # After the first successful apply, this file can be safely deleted.
 #------------------------------------------------------------------------------
 
 import {
-  to = aws_cloudwatch_log_group.lambda
+  to = module.lambda.aws_cloudwatch_log_group.lambda
   id = "/aws/lambda/enterprise-cicd-dev-release-metadata"
 }
