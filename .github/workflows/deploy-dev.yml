@@ -92,6 +92,12 @@ jobs:
             -var="git_commit=${{ github.sha }}" \
             -var="build_id=${{ github.run_id }}"
 
+      # Wait for IAM policy changes to propagate across AWS
+      - name: Wait for IAM Policy Propagation
+        run: |
+          echo "Waiting 15 seconds for IAM policy changes to propagate..."
+          sleep 15
+
       - name: Terraform Plan
         working-directory: infrastructure/dev
         run: |
