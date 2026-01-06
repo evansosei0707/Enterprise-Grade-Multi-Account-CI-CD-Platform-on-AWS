@@ -98,6 +98,20 @@ jobs:
           echo "Waiting 15 seconds for IAM policy changes to propagate..."
           sleep 15
 
+      # Import existing CloudWatch Log Group if it exists
+      - name: Import Existing Log Group
+        working-directory: infrastructure/dev
+        continue-on-error: true
+        run: |
+          terraform import \
+            -var="deploy_role_arn=${{ env.DEV_ROLE_ARN }}" \
+            -var="lambda_artifact_key=${{ needs.build.outputs.artifact_key }}" \
+            -var="release_version=1.0.${{ github.run_number }}" \
+            -var="git_commit=${{ github.sha }}" \
+            -var="build_id=${{ github.run_id }}" \
+            module.lambda.aws_cloudwatch_log_group.lambda \
+            /aws/lambda/enterprise-cicd-dev-release-metadata
+
       - name: Terraform Plan
         working-directory: infrastructure/dev
         run: |
