@@ -98,29 +98,6 @@ jobs:
           echo "Waiting 15 seconds for IAM policy changes to propagate..."
           sleep 15
 
-      # Import existing CloudWatch Log Group if it exists
-      - name: Import Existing Log Group
-        working-directory: infrastructure/dev
-        run: |
-          echo "Attempting to import existing CloudWatch Log Group..."
-          set +e
-          terraform import \
-            -var="deploy_role_arn=${{ env.DEV_ROLE_ARN }}" \
-            -var="lambda_artifact_key=placeholder.zip" \
-            -var="release_version=1.0.0" \
-            -var="git_commit=placeholder" \
-            -var="build_id=placeholder" \
-            module.lambda.aws_cloudwatch_log_group.lambda \
-            /aws/lambda/enterprise-cicd-dev-release-metadata
-          IMPORT_EXIT_CODE=$?
-          set -e
-          if [ $IMPORT_EXIT_CODE -eq 0 ]; then
-            echo "✅ Successfully imported CloudWatch Log Group"
-          else
-            echo "⚠️ Import failed (exit code: $IMPORT_EXIT_CODE) - resource may already be in state or doesn't exist"
-          fi
-
-
       - name: Terraform Plan
         working-directory: infrastructure/dev
         run: |
