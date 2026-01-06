@@ -63,6 +63,7 @@ resource "aws_iam_role_policy" "deploy_policy" {
           "lambda:GetFunction",
           "lambda:GetFunctionConfiguration",
           "lambda:ListFunctions",
+          "lambda:ListVersionsByFunction",
           "lambda:InvokeFunction",
           "lambda:AddPermission",
           "lambda:RemovePermission",
