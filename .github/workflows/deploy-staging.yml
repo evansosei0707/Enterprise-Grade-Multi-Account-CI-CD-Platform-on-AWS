@@ -32,7 +32,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.commit_sha }}
+          ref: ${{ inputs.commit_sha != 'latest' && inputs.commit_sha || '' }}
 
       - name: Set Artifact Key
         run: |
