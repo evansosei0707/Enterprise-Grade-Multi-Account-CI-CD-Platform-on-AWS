@@ -94,6 +94,9 @@ resource "aws_iam_role_policy" "deploy_policy" {
           "lambda:UpdateFunctionConfiguration",
           "lambda:GetFunction",
           "lambda:GetFunctionConfiguration",
+          "lambda:GetFunctionCodeSigningConfig",
+          "lambda:ListVersionsByFunction",
+          "lambda:PublishVersion",
           "lambda:InvokeFunction",
           "lambda:GetPolicy",
           "lambda:TagResource",
@@ -200,7 +203,21 @@ resource "aws_iam_role_policy" "deploy_policy" {
           "s3:GetObjectVersion"
         ]
         Resource = [
-          "arn:aws:s3:::enterprise-cicd-artifacts/lambda/*"
+          "arn:aws:s3:::enterprise-cicd-artifacts-${var.tooling_account_id}/lambda/*"
+        ]
+      },
+      # IAM for Deploy Role - Read self (required for Terraform state refresh)
+      {
+        Sid    = "IAMReadSelf"
+        Effect = "Allow"
+        Action = [
+          "iam:GetRole",
+          "iam:GetRolePolicy",
+          "iam:ListRolePolicies",
+          "iam:ListAttachedRolePolicies"
+        ]
+        Resource = [
+          "arn:aws:iam::*:role/${var.project_name}-deploy-role"
         ]
       },
       # KMS for decryption

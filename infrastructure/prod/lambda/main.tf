@@ -11,6 +11,10 @@ resource "aws_cloudwatch_log_group" "lambda" {
     Environment   = var.environment
     SecurityLevel = "HIGH"
   }
+
+  lifecycle {
+    ignore_changes = [name]
+  }
 }
 
 resource "aws_lambda_function" "release_metadata" {
