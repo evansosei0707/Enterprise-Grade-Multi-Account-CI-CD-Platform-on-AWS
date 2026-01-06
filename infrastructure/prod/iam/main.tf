@@ -97,6 +97,7 @@ resource "aws_iam_role_policy" "deploy_policy" {
           "lambda:GetFunctionCodeSigningConfig",
           "lambda:ListVersionsByFunction",
           "lambda:PublishVersion",
+          "lambda:PutFunctionConcurrency",
           "lambda:InvokeFunction",
           "lambda:GetPolicy",
           "lambda:TagResource",
