@@ -39,9 +39,6 @@ resource "aws_lambda_function" "release_metadata" {
     }
   }
 
-  # Reserved concurrent executions for production stability
-  # Reduced to avoid exceeding account unreserved concurrency minimum
-  reserved_concurrent_executions = 10
 
   depends_on = [aws_cloudwatch_log_group.lambda]
 
