@@ -118,11 +118,6 @@ resource "aws_iam_role_policy" "deploy_policy" {
         Resource = [
           "arn:aws:lambda:${var.aws_region}:*:function:${var.project_name}-${var.environment}-release-metadata"
         ]
-        Condition = {
-          StringEquals = {
-            "lambda:FunctionArn" = "arn:aws:lambda:${var.aws_region}:*:function:${var.project_name}-${var.environment}-release-metadata"
-          }
-        }
       },
       # API Gateway - Very restricted
       {
