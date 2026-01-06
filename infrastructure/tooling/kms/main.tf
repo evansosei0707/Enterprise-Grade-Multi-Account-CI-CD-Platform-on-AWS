@@ -40,7 +40,8 @@ resource "aws_kms_key" "main" {
         Action = [
           "kms:Decrypt",
           "kms:DescribeKey",
-          "kms:GenerateDataKey*"
+          "kms:GenerateDataKey*",
+          "kms:Encrypt"
         ]
         Resource = "*"
       }

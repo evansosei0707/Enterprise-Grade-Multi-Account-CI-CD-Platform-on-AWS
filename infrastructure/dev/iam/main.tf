@@ -86,9 +86,20 @@ resource "aws_iam_role_policy" "deploy_policy" {
           "arn:aws:apigateway:${var.aws_region}::/*"
         ]
       },
-      # CloudWatch Logs permissions
+      # CloudWatch Logs permissions (Read/List - Broad access required for Terraform checks)
       {
-        Sid    = "CloudWatchLogs"
+        Sid    = "CloudWatchLogsRead"
+        Effect = "Allow"
+        Action = [
+          "logs:DescribeLogGroups",
+          "logs:DescribeLogStreams",
+          "logs:ListTagsForResource"
+        ]
+        Resource = "*"
+      },
+      # CloudWatch Logs permissions (Write - Restricted to project)
+      {
+        Sid    = "CloudWatchLogsWrite"
         Effect = "Allow"
         Action = [
           "logs:CreateLogGroup",
@@ -96,11 +107,8 @@ resource "aws_iam_role_policy" "deploy_policy" {
           "logs:CreateLogStream",
           "logs:DeleteLogStream",
           "logs:PutLogEvents",
-          "logs:DescribeLogGroups",
-          "logs:DescribeLogStreams",
           "logs:TagResource",
           "logs:UntagResource",
-          "logs:ListTagsForResource",
           "logs:PutRetentionPolicy"
         ]
         Resource = [
