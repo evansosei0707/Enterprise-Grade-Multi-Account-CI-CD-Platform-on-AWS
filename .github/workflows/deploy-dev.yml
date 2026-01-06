@@ -80,6 +80,18 @@ jobs:
         env:
           AWS_REGION: ${{ env.AWS_REGION }}
 
+      # Apply IAM changes first to ensure deploy role has necessary permissions
+      - name: Apply IAM Changes First
+        working-directory: infrastructure/dev
+        run: |
+          terraform apply -auto-approve \
+            -target=module.iam.aws_iam_role_policy.deploy_policy \
+            -var="deploy_role_arn=${{ env.DEV_ROLE_ARN }}" \
+            -var="lambda_artifact_key=${{ needs.build.outputs.artifact_key }}" \
+            -var="release_version=1.0.${{ github.run_number }}" \
+            -var="git_commit=${{ github.sha }}" \
+            -var="build_id=${{ github.run_id }}"
+
       - name: Terraform Plan
         working-directory: infrastructure/dev
         run: |
